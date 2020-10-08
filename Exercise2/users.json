@@ -1,0 +1,30 @@
+[
+  {
+    "UserId": 0,
+    "UserName": "Igorek",
+    "City": "Kishinev",
+    "Role": "BOSS",
+    "Password": "Moldova2014"
+  },
+  {
+    "UserId": 1,
+    "UserName": "Dencik",
+    "City": "Kishinev",
+    "Role": "MANAGER",
+    "Password": "Moldova2014"
+  },
+  {
+    "UserId": 2,
+    "UserName": "Euginiu",
+    "City": "Kishinev",
+    "Role": "BOSS",
+    "Password": "Moldova2014"
+  },
+  {
+    "UserId": 3,
+    "UserName": "Nikita",
+    "City": "Kishinev",
+    "Role": "EMPLOYEE",
+    "Password": "Moldova2014"
+  }
+]

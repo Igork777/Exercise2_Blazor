@@ -1,0 +1,223 @@
+﻿@page "/Todos"
+@using Exercise1.Models
+@using System.Security.Claims
+@inject ITodoService TodoService
+@inject AddTodo AddTodo
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h1>Todo list</h1>
+<p>
+    Filter by user Id: <input type="number" @oninput="@((arg) => FilterByUserId(arg))" style="width: 50px"/>
+</p>
+<p>
+    Filter by completed status:
+    <select class="form-control selectpicker" @onchange="@((arg) => FilterByCompletedStatus(arg))" style="width: 100px">
+        <option>Both</option>
+        <option>False</option>
+        <option>True</option>
+    </select>
+</p>
+@if (todosToShow == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else if (!todosToShow.Any())
+{
+    <p>
+        <em>No ToDo items exist. Please add some.</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Todo ID</th>
+            <th>User ID</th>
+            <th>Assigned to</th>
+            <th>Role of the assignee</th>
+            <th>Task</th>
+            <th>Assigned by</th>
+            <th>Role of the assinor</th>
+            <AuthorizeView>
+                <Authorized>
+                    <th>Completed?</th>
+                    <th>Deletion Section</th>
+                </Authorized>
+            </AuthorizeView>
+
+        </tr>
+        </thead>
+        <AuthorizeView>
+            <NotAuthorized>
+                <tbody>
+                @foreach (var item in todosToShow)
+                {
+                    <tr>
+                        <td>@item.TodoId</td>
+                        <td>@item.AssigneeId</td>
+                        <td>@item.AssigneeUserName</td>
+                        <td>@item.AssigneeRole</td>
+                        <td>@item.Title</td>
+                        <td>@item.AsignorUserName</td>
+                        <td>@item.AssignorRole</td>
+                    </tr>
+                }
+                </tbody>
+            </NotAuthorized>
+        </AuthorizeView>
+        <AuthorizeView Policy="MustBeAtLeastEmployee">
+            <Authorized Context="AuthEmployee">
+                <tbody>
+                @foreach (var item in todosToShow)
+                {
+                    @if (_claimsPrincipal.Identity.Name.Equals(item.AssigneeUserName))
+                    {
+                        <tr>
+                            <td>@item.TodoId</td>
+                            <td>@item.AssigneeId</td>
+                            <td>@item.AssigneeUserName</td>
+                            <td>@item.AssigneeRole</td>
+                            <td>@item.Title</td>
+                            <td>@item.AsignorUserName</td>
+                            <td>@item.AssignorRole</td>
+                            <td>
+                                <input type="checkbox" checked=@item.IsCompleted @onchange="@((arg) => CompletedChange(arg, item))"/>
+                            </td>
+                            <td>
+                                <button @onclick="@(() => RemoveTodo(item.TodoId))">
+                                    <i class="oi oi-trash" style="color:red"/>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Policy="MustBeAtLeastManager">
+            <Authorized Context="AuthManager">
+                <tbody>
+                @foreach (var item in todosToShow)
+                {
+                    @if (item.AssigneeRole.Equals("EMPLOYEE") && !(item.AssigneeUserName.Equals(_claimsPrincipal.Identity.Name)))
+                    {
+        
+                        <tr>
+                            <td>@item.TodoId</td>
+                            <td>@item.AssigneeId</td>
+                            <td>@item.AssigneeUserName</td>
+                            <td>@item.AssigneeRole</td>
+                            <td>@item.Title</td>
+                            <td>@item.AsignorUserName</td>
+                            <td>@item.AssignorRole</td>
+                            <td>
+                                <input type="checkbox" checked=@item.IsCompleted @onchange="@((arg) => CompletedChange(arg, item))"/>
+                            </td>
+                            <td>
+                                <button @onclick="@(() => RemoveTodo(item.TodoId))">
+                                    <i class="oi oi-trash" style="color:red"/>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </Authorized>
+        </AuthorizeView>
+         <AuthorizeView Policy="MustBeAtLeastBoss">
+                            <Authorized Context="AuthBoss">
+                                <tbody>
+                                @foreach (var item in todosToShow)
+                                {
+                                    @if (item.AssigneeRole.Equals("MANAGER") && !(item.AssigneeUserName.Equals(_claimsPrincipal.Identity.Name)))
+                                    {
+                
+                                        <tr>
+                                            <td>@item.TodoId</td>
+                                            <td>@item.AssigneeId</td>
+                                            <td>@item.AssigneeUserName</td>
+                                            <td>@item.AssigneeRole</td>
+                                            <td>@item.Title</td>
+                                            <td>@item.AsignorUserName</td>
+                                            <td>@item.AssignorRole</td>
+                                            <td>
+                                                <input type="checkbox" checked=@item.IsCompleted @onchange="@((arg) => CompletedChange(arg, item))"/>
+                                            </td>
+                                            <td>
+                                                <button @onclick="@(() => RemoveTodo(item.TodoId))">
+                                                    <i class="oi oi-trash" style="color:red"/>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                </tbody>
+                            </Authorized>
+                        </AuthorizeView>
+    </table>
+}
+
+@code {
+    private IList<Todo> alltTodos;
+    private IList<Todo> todosToShow;
+    private ClaimsPrincipal _claimsPrincipal;
+    private int? filterById;
+    private bool? filterByIsCompleted;
+
+    private void FilterByUserId(ChangeEventArgs args)
+    {
+        filterById = null;
+        try
+        {
+            filterById = int.Parse(args.Value.ToString());
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void FilterByCompletedStatus(ChangeEventArgs args)
+    {
+        filterByIsCompleted = null;
+        try
+        {
+            filterByIsCompleted = bool.Parse(args.Value.ToString());
+        }
+        catch (Exception e)
+        {
+        }
+        ExecuteFilter();
+    }
+
+    private void ExecuteFilter()
+    {
+        todosToShow = alltTodos.Where(t => (filterById != null && t.AssigneeId == filterById || filterById == null) && (filterByIsCompleted != null && t.IsCompleted == filterByIsCompleted || filterByIsCompleted == null)).ToList();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _claimsPrincipal = authState.User;
+        alltTodos = TodoService.GetTodos();
+        todosToShow = alltTodos;
+    }
+
+    private void RemoveTodo(int todoId)
+    {
+        Todo todoToRemove = alltTodos.First(t => t.TodoId == todoId);
+        TodoService.RemoveTodo(todoId);
+        alltTodos.Remove(todoToRemove);
+    }
+
+    private void CompletedChange(ChangeEventArgs evt, Todo todo)
+    {
+        todo.IsCompleted = (bool) evt.Value;
+        TodoService.UpdateTodo(todo);
+    }
+
+}

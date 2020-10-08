@@ -1,0 +1,61 @@
+﻿@page "/registration"
+@using Exercise1.Data
+@using Exercise1.Data.Impl
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IUserService UserService
+
+<AuthorizeView>
+
+    <NotAuthorized>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>User name:</label>
+            <input type="text" placeholder="user name" @bind-value="_username"/>
+        </div>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>City:</label>
+            <input type="text" placeholder="city" @bind-value="_city"/>
+        </div>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>Role:</label>
+            <select @bind="_role">
+                 <option selected disabled value="-1">Choose your role</option>
+                <option value="BOSS">BOSS</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="EMPLOYEE">EMPLOYEE</option>
+            </select>
+        </div>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>Password</label>
+            <input type="password" placeholder="password" @bind-value="_password"/>
+        </div>
+        <div style="color: red;display: flex;justify-content: center">@_errorMessage</div>
+
+        <div style="display: flex;justify-content: center">
+            <button @onclick="PerformRegister">Log In</button>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string _username;
+    private string _city;
+    private string _role;
+    private string _password;
+    private string _errorMessage;
+
+    public async Task PerformRegister()
+    {
+        _errorMessage = "";
+        try
+        {
+            ((CustomAuthenticationStateProvider) AuthenticationStateProvider).ValidateRegistration(_username, _city, _role, _password);
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception e)
+        {
+            _errorMessage = e.Message;
+        }
+    }
+}

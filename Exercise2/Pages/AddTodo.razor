@@ -1,0 +1,106 @@
+﻿@page "/AddTodo"
+@using Exercise1.Models
+@using Exercise1.Data
+@using System.Security.Claims
+@inject ITodoService TodoService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<h3>AddTodo</h3>
+
+<EditForm Model="@newTodoItem">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    <div class="form-group">
+        Asign to <br/>
+
+        <select @bind="newTodoItem.AssigneeUserName" class="form-control selectpicker" style="width: 300px">
+            <option selected disabled value="-1">Choose the person to assign task</option>
+            <AuthorizeView Policy="MustBeAtLeastEmployee">
+                <Authorized Context="AuthEmployee">
+                    @foreach (var item in _allUsers)
+                    {
+                        @if (item.UserName.Equals(newTodoItem.AsignorUserName))
+                        {
+                            <option>@item.UserName</option>
+                        }
+                    }
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Policy="MustBeAtLeastManager">
+                <Authorized Context="AuthManager">
+                    @foreach (var item in _allUsers)
+                    {
+                        @if (item.Role.Equals("EMPLOYEE"))
+                        {
+                            <option>@item.UserName</option>
+                        }
+                    }
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Policy="MustBeAtLeastBoss">
+                <Authorized Context="AuthBoss">
+                    @foreach (var item in _allUsers)
+                    {
+                        @if (item.Role.Equals("MANAGER"))
+                        {
+                            <option>@item.UserName</option>
+                        }
+                    }
+                </Authorized>
+            </AuthorizeView>
+
+        </select>
+    </div>
+    <div class="form-group">
+        Title:<br/>
+        <InputTextArea rows="4" @bind-Value="newTodoItem.Title"/>
+    </div>
+    <p class="actions">
+        <button class="btn btn-outline-dark" @onclick="AddNewTodo">Create</button>
+    </p>
+    <p @bind="error" style="color: red"></p>
+</EditForm>
+
+@code {
+    private IList<User> _allUsers = new List<User>();
+    private Todo newTodoItem = new Todo();
+    private string error;
+    
+
+
+    private void AddNewTodo()
+    {
+        foreach (var user in _allUsers)
+        {
+            if (user.UserName.Equals(newTodoItem.AssigneeUserName))
+            {
+                newTodoItem.AssigneeRole = user.Role;
+                break;
+            }
+        }
+        bool isOk = TodoService.AddTodo(newTodoItem);
+        if (isOk)
+        {
+            NavigationManager.NavigateTo("/Todos");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allUsers = TodoService.GetUsers();
+        newTodoItem.AssigneeId = TodoService.GetTodos().Count;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var AuthorizedUser = authState.User;
+        foreach (var u in _allUsers)
+        {
+            if (u.UserName == AuthorizedUser.Identity.Name)
+            {
+                newTodoItem.AsignorUserName = u.UserName;
+                newTodoItem.AssignorRole = u.Role;
+                break;
+            }
+        }
+    }
+
+}

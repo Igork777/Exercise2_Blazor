@@ -1,0 +1,48 @@
+﻿@page "/Login"
+@using Exercise1.Data
+@using Exercise1.Data.Impl
+@namespace Exercise1.Pages
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IUserService UserService
+
+<AuthorizeView>
+    
+    <NotAuthorized>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>User name:</label>
+            <input type="text" placeholder="user name" @bind-value="_username"/>
+        </div>
+        <div class="form-group" style="display: flex;justify-content: center">
+            <label>Password</label>
+            <input type="password" placeholder="password" @bind-value="_password"/>
+        </div>
+        <div style="color: red;display: flex;justify-content: center">@_errorMessage</div>
+
+        <div style="display: flex;justify-content: center">
+            <button @onclick="PerformLogin">Log In</button>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    private string _username;
+    private string _password;
+    private string _errorMessage;
+
+    public async Task PerformLogin()
+    {
+        _errorMessage = "";
+        try
+        {
+            ((CustomAuthenticationStateProvider)AuthenticationStateProvider).ValidateLogin(_username, _password);
+            _username = "";
+            _password = "";
+            NavigationManager.NavigateTo("/");
+        }catch (Exception e)
+        {
+            _errorMessage = e.Message;
+        }
+    }
+}
