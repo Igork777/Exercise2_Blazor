@@ -4,27 +4,27 @@
     "UserName": "Igorek",
     "City": "Kishinev",
     "Role": "BOSS",
-    "Password": "Moldova2014"
+    "Password": "Moldova2000"
   },
   {
     "UserId": 1,
     "UserName": "Dencik",
     "City": "Kishinev",
     "Role": "MANAGER",
-    "Password": "Moldova2014"
+    "Password": "Moldova2000"
   },
   {
     "UserId": 2,
     "UserName": "Euginiu",
     "City": "Kishinev",
     "Role": "BOSS",
-    "Password": "Moldova2014"
+    "Password": "Moldova2000"
   },
   {
     "UserId": 3,
     "UserName": "Nikita",
     "City": "Kishinev",
     "Role": "EMPLOYEE",
-    "Password": "Moldova2014"
+    "Password": "Moldova2000"
   }
 ]
